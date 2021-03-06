@@ -14,6 +14,22 @@ class EventEmitter {
     return this.addListener(eventName, listener);
   }
 
+  once(eventName, listener) {
+    return this.addListener(eventName, this._onceWrap(eventName, listener));
+  }
+
+  _onceWrap(eventName, listener) {
+    const state = { eventName, listener, wrapFn: null };
+    state.wrapFn = this._onceWrapper.bind(this, state);
+    state.wrapFn.listener = listener;
+    return state.wrapFn;
+  }
+
+  _onceWrapper({eventName, listener, wrapFn}, ...args) {
+    this.removeListener(eventName, wrapFn);
+    listener.apply(this, args);
+  }
+
   emit(eventName, ...args) {
     const events = this._events;
     if (events[eventName]) {
